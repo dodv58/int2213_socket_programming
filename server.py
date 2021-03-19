@@ -5,8 +5,7 @@ import socket, os
 from _thread import *
 import threading
 
-online_users = []
-user_sock = {}
+online_users = {}
 file_dir = '/Users/dodang/workspace/uet/int2213/programming_excercise'
 
 def login(user_id, msg):
@@ -15,7 +14,7 @@ def login(user_id, msg):
         if len(user) <= 0:
             return b'Wrong format!!!', user_id
         if not user_id and user not in online_users:
-            online_users.append(user)
+            online_users[user] = None
             return b'You are logged in! Send #Help to get guidance.', user
         if not user_id and user in online_users:
             return b'User already logged in!!!', user_id
@@ -34,7 +33,7 @@ def send_msg(user_id, msg):
             return 'Receiver is not online'
         else:
             message = 'Message from {}: {}'.format(user_id, ' '.join(msg.split(' ')[2:]))
-            user_sock[receiver].send(message.encode())
+            online_users[receiver].send(message.encode())
             return 'Message sent'
     except Exception as e:
         print(e)
@@ -42,14 +41,14 @@ def send_msg(user_id, msg):
 
 def remove_user(user_id):
     try:
-        online_users.remove(user_id)
-        user_sock.pop(user_id, None)
-    except:
+        online_users.pop(user_id, None)
+    except Exception as e:
+        print(e)
         pass
 
 def download(user_id, msg):
     try:
-        conn = user_sock[user_id]
+        conn = online_users[user_id]
         file_path = file_dir + '/' + msg.split(' ')[1]
         if not os.path.isfile(file_path):
             conn.send(b'File does not exist')
@@ -76,7 +75,7 @@ def handle_message(user_id, msg):
         return b'''
 - Please login by sending message: #Login <student_id>
 After logged in, please wait for incomming message from server.
-- If you are logged in, please choose:
+- If you are logged in, please send request as format described bellow:
 1. Get list active users: #list_users
 2. Send message to another user: #msg <receiver_id> <message>
 3. List files: #list_files
@@ -90,7 +89,7 @@ After logged in, please wait for incomming message from server.
         if not user_id:
             return b'You are not logged in, send #Help to get guidance'
         if msg == '#list_users':
-            res = str(online_users)
+            res = str(online_users.keys())
         elif msg.startswith('#msg'):
             res = send_msg(user_id, msg)
         elif msg.startswith('#list_files'):
@@ -113,27 +112,24 @@ def threaded(c):
         data = c.recv(1024)
         if not data:
             c.send(b'No data provided, bye!')
-            remove_user(user_id)
-            print('Close connection')
-            # lock released on exit 
-            #print_lock.release()
             break
-
-        data = data.decode().strip()
-        if data.startswith('#Login'):
-            response, user_id = login(user_id, data)
-            if user_id:
-                user_sock[user_id] = c
         else:
-            response = handle_message(user_id, data)
-        if not response:
-            c.send(b'Bye')
-            break
+            data = data.decode().strip()
+            if data.startswith('#Login'):
+                response, user_id = login(user_id, data)
+                if user_id:
+                    online_users[user_id] = c
+            else:
+                response = handle_message(user_id, data)
+            if not response:
+                c.send(b'Bye')
+                break
 
-        # send back reversed string to client 
-        c.send(response)
+            # send back reversed string to client 
+            c.send(response)
 
     # connection closed 
+    remove_user(user_id)
     c.close()
 
 
