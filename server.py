@@ -1,12 +1,14 @@
 # import socket programming library 
 import socket, os
+import json
+import sys
 
 # import thread module 
 from _thread import *
 import threading
 
 online_users = {}
-file_dir = '/Users/dodang/workspace/uet/int2213/programming_excercise'
+file_dir = ''
 
 def login(user_id, msg):
     try:
@@ -89,14 +91,18 @@ After logged in, please wait for incomming message from server.
         if not user_id:
             return b'You are not logged in, send #Help to get guidance'
         if msg == '#list_users':
-            res = str(online_users.keys())
+            res = []
+            for u in online_users.keys():
+                res.append(u)
+            res = json.dumps(res)
         elif msg.startswith('#msg'):
             res = send_msg(user_id, msg)
         elif msg.startswith('#list_files'):
-            res = ''
+            res = []
             for f in os.listdir(file_dir):
                 if os.path.isfile(f):
-                    res += "{}\n".format(f)
+                    res.append(f)
+            res = json.dumps(res)
         elif msg.startswith('#download'):
             download(user_id, msg)
             res = 'Done'
@@ -134,33 +140,34 @@ def threaded(c):
 
 
 def Main():
-	host = ""
+    host = ""
 
-	# reverse a port on your computer 
-	# in our case it is 12345 but it 
-	# can be anything 
-	port = 12346
-	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.bind((host, port))
-	print("socket binded to port", port)
+    # reverse a port on your computer 
+    # in our case it is 12345 but it 
+    # can be anything 
+    port = int(sys.argv[1])
+    file_dir = sys.argv[2]
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind((host, port))
+    print("socket binded to port", port)
 
-	# put the socket into listening mode 
-	s.listen(5)
-	print("socket is listening")
+    # put the socket into listening mode 
+    s.listen(5)
+    print("socket is listening")
 
-	# a forever loop until client wants to exit 
-	while True:
+    # a forever loop until client wants to exit 
+    while True:
 
-		# establish connection with client 
-		c, addr = s.accept()
+            # establish connection with client 
+            c, addr = s.accept()
 
-		# lock acquired by client 
-		#print_lock.acquire()
-		print('Connected to :', addr[0], ':', addr[1])
+            # lock acquired by client 
+            #print_lock.acquire()
+            print('Connected to :', addr[0], ':', addr[1])
 
-		# Start a new thread and return its identifier 
-		start_new_thread(threaded, (c,))
-	s.close()
+            # Start a new thread and return its identifier 
+            start_new_thread(threaded, (c,))
+    s.close()
 
 
 if __name__ == '__main__':
