@@ -63,6 +63,9 @@ def download(user_id, msg):
                     if not bytes_read:
                         break
                     conn.sendall(bytes_read)
+            with open('/home/ubuntu/download_history.txt', 'a+') as f:
+                f.write('{}-{}\n'.format(user_id, file_path))
+                f.flush()
     except Exception as e:
         print(e)
         pass
