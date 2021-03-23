@@ -1,5 +1,6 @@
 # Import socket module 
 import socket
+from datetime import datetime 
 
 def Main():
     # local host IP '127.0.0.1' 
@@ -13,28 +14,22 @@ def Main():
     # connect to server on local computer 
     s.connect((host,port))
     print('Connected')
-    s.send(b'Login')
+    s.send(b'#Login 111111')
     data = s.recv(1024)
     print('Received from the server :',str(data.decode('ascii')))
-    while True:
-        ans = input('Enter your message:')
 
-        # message sent to server 
-        s.send(ans.encode('ascii'))
+    with open('out-{}.txt'.format(datetime.now(), 'w+')) as f:
+        while True:
+            # messaga received from server 
+            data = s.recv(1024)
 
-        # messaga received from server 
-        data = s.recv(1024)
+            # print the received message 
+            # here it would be a reverse of sent message 
+            print('Received from the server :',str(data.decode('ascii')))
+            f.write(str(data.decode('ascii')) + '\n')
 
-        # print the received message 
-        # here it would be a reverse of sent message 
-        print('Received from the server :',str(data.decode('ascii')))
-
-        if ans == '@EXIT':
-            break
-
-        # ask the client whether he wants to continue 
-    # close the connection 
-    s.close()
+        # close the connection 
+        s.close()
 
 if __name__ == '__main__':
 	Main()

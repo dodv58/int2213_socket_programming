@@ -100,7 +100,7 @@ After logged in, please wait for incomming message from server.
         elif msg.startswith('#list_files'):
             res = []
             for f in os.listdir(file_dir):
-                if os.path.isfile(f):
+                if os.path.isfile(file_dir +'/'+ f):
                     res.append(f)
             res = json.dumps(res)
         elif msg.startswith('#download'):
@@ -140,6 +140,7 @@ def threaded(c):
 
 
 def Main():
+    global file_dir
     host = ""
 
     # reverse a port on your computer 
